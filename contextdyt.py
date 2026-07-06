@@ -9,7 +9,6 @@ class DynamicTanh(nn.Module):
         self.alpha_init_value = alpha_init_value      
         self.alpha = nn.Parameter(torch.ones(1) * alpha_init_value)
        
-
     def forward(self, x):
         x = torch.tanh(self.alpha * x)
         return x
@@ -22,7 +21,6 @@ class GlobalDynamicTanh(nn.Module):
         self.alpha_init_value = alpha_init_value      
         self.alpha = nn.Parameter(torch.ones(normalized_shape*sequence_length) * alpha_init_value)
        
-
     def forward(self, x):
         x = torch.tanh(self.alpha * x)
         return x 
@@ -30,8 +28,7 @@ class GlobalDynamicTanh(nn.Module):
 class MappingUnit(nn.Module):
     def __init__(self,dim):
         super().__init__()
-        
-           
+                   
         self.dyt_token = DynamicTanh(dim)
         self.gelu = nn.GELU()
         self.proj_1 =  nn.Linear(dim,dim,bias = False)
@@ -47,20 +44,16 @@ class MappingUnit(nn.Module):
     	v = self.proj_2(v)
     	g = u * v
     	x = self.proj_3(g)
-    	
-    	
+    	    	
     	return x
     	
-
 class InteractionUnit(nn.Module):
     def __init__(self,dim,num_tokens):
         super().__init__()
-        
-             
+                     
         self.dyt_token = DynamicTanh(dim) 
         self.dyt_context = GlobalDynamicTanh(dim,num_tokens)    
-       
-             	   
+                    	   
     def forward(self, x):
     
     	x = self.dyt_token(x)
@@ -72,17 +65,13 @@ class InteractionUnit(nn.Module):
     	x = self.dyt_context(x)
     	
     	x = x.reshape([dim0,dim1,dim2])
-    	
-    	
-    	
+    	    	
     	return x
     	
-
 class ContextDyTBlock(nn.Module):
     def __init__(self, d_model, num_tokens):
         super().__init__()
-       
-         
+                
         self.mapping = MappingUnit(d_model)
         self.interaction = InteractionUnit(d_model,num_tokens)
         
@@ -97,24 +86,20 @@ class ContextDyTBlock(nn.Module):
         residual = x
         
         x = self.mapping(x)
-        
-                                          
+                                                  
         out = x + residual
-        
-        
+                
         return out
 
-
-
-
 class ContextDyT(nn.Module):
-    def __init__(self, d_model,num_tokens, num_layers):
+    def __init__(self, d_model, num_tokens, num_layers):
         super().__init__()
         
         self.model = nn.Sequential(
-            *[ContextDyTBlock(d_model,num_tokens) for _ in range(num_layers)]
+            *[ContextDyTBlock(d_model, num_tokens) for _ in range(num_layers)]
         )
 
     def forward(self, x):
        
         return self.model(x)
+        
